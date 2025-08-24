@@ -1,0 +1,22 @@
+from pyzbar.pyzbar import decode
+from PIL import Image
+
+def validate_ticket(qr_image_path):
+    data = decode(Image.open(qr_image_path))
+    if not data:
+        return "Invalid QR code"
+    qr_text = data[0].data.decode("utf-8")
+
+    booking_id = qr_text.split(",")[0].split(":")[1]
+    c.execute("SELECT status FROM bookings WHERE booking_id=?", (booking_id,))
+    result = c.fetchone()
+
+    if result and result[0] == "Booked":
+        c.execute("UPDATE bookings SET status=? WHERE booking_id=?", ("Used", booking_id))
+        conn.commit()
+        return "Ticket Validated ✅"
+    else:
+        return "Invalid or Already Used ❌"
+
+# Example
+print(validate_ticket("ticket_1.png"))
