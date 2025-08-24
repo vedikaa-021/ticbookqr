@@ -1,0 +1,26 @@
+import qrcode
+import sqlite3
+
+# --- Database setup ---
+conn = sqlite3.connect("tickets.db")
+c = conn.cursor()
+c.execute('''CREATE TABLE IF NOT EXISTS bookings 
+            (booking_id INTEGER PRIMARY KEY, 
+             name TEXT, route TEXT, date TEXT, seat TEXT, status TEXT)''')
+
+# --- Booking Function ---
+def book_ticket(name, route, date, seat):
+    c.execute("INSERT INTO bookings (name, route, date, seat, status) VALUES (?, ?, ?, ?, ?)",
+              (name, route, date, seat, "Booked"))
+    booking_id = c.lastrowid
+    conn.commit()
+
+    # Generate QR
+    qr_data = f"BookingID:{booking_id}, Name:{name}, Seat:{seat}, Date:{date}"
+    img = qrcode.make(qr_data)
+    img.save(f"ticket_{booking_id}.png")
+
+    print(f"Ticket booked! QR code saved as ticket_{booking_id}.png")
+
+# Example
+book_ticket("Alice", "CityA-CityB", "2025-08-25", "A12")
